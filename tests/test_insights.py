@@ -1,7 +1,7 @@
 """
 Tests for src.insights: LLM client and summarizer.
 
-All Groq API calls are mocked — no real HTTP requests are made.
+All Anthropic API calls are mocked — no real HTTP requests are made.
 """
 from __future__ import annotations
 
@@ -212,67 +212,61 @@ class TestAnswerQuestion:
 class TestLLMClient:
     def test_returns_degraded_message_when_no_key(self):
         """
-        When groq_api_key is empty, chat_completion must return the degradation
-        message WITHOUT contacting the Groq API.
+        When anthropic_api_key is empty, chat_completion returns the degradation
+        message WITHOUT contacting the Anthropic API.
         """
         import src.insights.llm_client as llm_mod
 
         with patch.object(llm_mod, "settings") as mock_settings:
-            mock_settings.groq_api_key = ""
+            mock_settings.anthropic_api_key = ""
             result = llm_mod.chat_completion("test prompt")
-            assert "GROQ_API_KEY" in result or "unavailable" in result.lower()
+            assert "ANTHROPIC_API_KEY" in result or "unavailable" in result.lower()
 
-    def test_no_groq_call_when_key_missing(self):
+    def test_no_anthropic_call_when_key_missing(self):
         """
-        Groq client must never be instantiated when the API key is empty.
+        Anthropic client must never be instantiated when the API key is empty.
         """
         import src.insights.llm_client as llm_mod
 
-        mock_groq_module = MagicMock()
+        mock_anthropic_module = MagicMock()
 
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"groq": mock_groq_module}),
+            patch.dict("sys.modules", {"anthropic": mock_anthropic_module}),
         ):
-            mock_settings.groq_api_key = ""
+            mock_settings.anthropic_api_key = ""
             llm_mod.chat_completion("test prompt")
-            mock_groq_module.Groq.assert_not_called()
+            mock_anthropic_module.Anthropic.assert_not_called()
 
     def test_returns_graceful_error_on_api_error(self):
         """
-        When groq.APIError is raised, chat_completion must catch it and
-        return a graceful error string instead of propagating the exception.
+        When anthropic.APIError is raised, chat_completion catches it and
+        returns a graceful error string instead of propagating the exception.
         """
         import src.insights.llm_client as llm_mod
 
-        # Create a real-ish exception class that is the same object as what
-        # the module will catch (groq.APIError).
         class MockAPIError(Exception):
             pass
 
-        mock_groq_module = MagicMock()
-        mock_groq_module.APIError = MockAPIError
+        mock_anthropic_module = MagicMock()
+        mock_anthropic_module.APIError = MockAPIError
         mock_client_instance = MagicMock()
-        mock_groq_module.Groq.return_value = mock_client_instance
-        mock_client_instance.chat.completions.create.side_effect = MockAPIError(
-            "Rate limit exceeded"
-        )
+        mock_anthropic_module.Anthropic.return_value = mock_client_instance
+        mock_client_instance.messages.create.side_effect = MockAPIError("Rate limit exceeded")
 
-        # Patch both settings AND the groq module reference inside llm_client.
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"groq": mock_groq_module}),
+            patch.dict("sys.modules", {"anthropic": mock_anthropic_module}),
         ):
-            mock_settings.groq_api_key = "fake-api-key"
-            # Temporarily replace the groq name inside the already-imported module
-            # by monkeypatching via sys.modules — the `import groq` inside
-            # chat_completion will pick it up from sys.modules at call time.
+            mock_settings.anthropic_api_key = "fake-api-key"
             result = llm_mod.chat_completion("test prompt")
             assert "unavailable" in result.lower()
 
     def test_returns_model_response_on_success(self):
         """
-        When the API succeeds, the model's content is returned.
+        When the API succeeds, the model text content is returned (stripped).
+
+        Anthropic response shape: message.content[0].text
         """
         import src.insights.llm_client as llm_mod
 
@@ -281,21 +275,22 @@ class TestLLMClient:
         class MockAPIError(Exception):
             pass
 
-        mock_choice = MagicMock()
-        mock_choice.message.content = f"  {expected_content}  "  # strip should be called
+        mock_content_block = MagicMock()
+        mock_content_block.text = f"  {expected_content}  "
 
-        mock_groq_module = MagicMock()
-        mock_groq_module.APIError = MockAPIError
+        mock_message = MagicMock()
+        mock_message.content = [mock_content_block]
+
+        mock_anthropic_module = MagicMock()
+        mock_anthropic_module.APIError = MockAPIError
         mock_client_instance = MagicMock()
-        mock_groq_module.Groq.return_value = mock_client_instance
-        mock_completion = MagicMock()
-        mock_completion.choices = [mock_choice]
-        mock_client_instance.chat.completions.create.return_value = mock_completion
+        mock_anthropic_module.Anthropic.return_value = mock_client_instance
+        mock_client_instance.messages.create.return_value = mock_message
 
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"groq": mock_groq_module}),
+            patch.dict("sys.modules", {"anthropic": mock_anthropic_module}),
         ):
-            mock_settings.groq_api_key = "fake-api-key"
+            mock_settings.anthropic_api_key = "fake-api-key"
             result = llm_mod.chat_completion("test prompt")
             assert result == expected_content

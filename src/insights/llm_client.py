@@ -1,9 +1,10 @@
 """
-Thin wrapper around the Groq chat completions API.
+Thin wrapper around the Anthropic Claude API.
 
-Gracefully degrades when no API key is configured.
+Gracefully degrades when no API key is configured — the rest of the system
+continues to function; only AI insights become unavailable.
 
-Function: chat_completion(prompt, system_prompt) -> str
+Get a free API key at: https://console.anthropic.com
 """
 from __future__ import annotations
 
@@ -13,11 +14,8 @@ from src.config import settings
 
 logger = logging.getLogger("insights.llm_client")
 
-_DEGRADED_NO_KEY = (
-    "AI insights unavailable. Set GROQ_API_KEY in .env to enable."
-)
+_DEGRADED_NO_KEY = "AI insights unavailable. Set ANTHROPIC_API_KEY in .env to enable."
 _DEGRADED_API_ERROR = "AI insights temporarily unavailable."
-
 _DEFAULT_SYSTEM_PROMPT = "You are a helpful data analyst."
 
 
@@ -26,41 +24,28 @@ def chat_completion(
     system_prompt: str = _DEFAULT_SYSTEM_PROMPT,
 ) -> str:
     """
-    Call the Groq chat completions API and return the assistant reply.
+    Call Claude and return the assistant reply as a plain string.
 
-    Parameters
-    ----------
-    prompt:
-        User-facing message to send to the model.
-    system_prompt:
-        System-level instruction; defaults to a generic data-analyst persona.
-
-    Returns
-    -------
-    str
-        Model response text, or a degradation message if the key is missing
-        or the API returns an error.
+    Returns a safe degradation message instead of raising if:
+    - ANTHROPIC_API_KEY is not set
+    - The API returns an error
     """
-    if not settings.groq_api_key:
-        logger.warning("GROQ_API_KEY not set — returning degraded message.")
+    if not settings.anthropic_api_key:
+        logger.warning("ANTHROPIC_API_KEY not set — returning degraded message.")
         return _DEGRADED_NO_KEY
 
     try:
-        import groq  # type: ignore[import]
+        import anthropic  # type: ignore[import]
 
-        client = groq.Groq(api_key=settings.groq_api_key)
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt},
-            ],
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
             max_tokens=512,
-            temperature=0.3,
+            system=system_prompt,
+            messages=[{"role": "user", "content": prompt}],
         )
-        content: str = response.choices[0].message.content.strip()
-        return content
+        return message.content[0].text.strip()
 
-    except groq.APIError as exc:  # type: ignore[attr-defined]
-        logger.error("Groq API error: %s", exc)
+    except anthropic.APIError as exc:  # type: ignore[attr-defined]
+        logger.error("Anthropic API error: %s", exc)
         return _DEGRADED_API_ERROR
