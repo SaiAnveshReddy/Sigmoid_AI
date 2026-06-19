@@ -1,10 +1,11 @@
 """
-Thin wrapper around the Anthropic Claude API.
+Thin wrapper around the Google Gemini API (gemini-1.5-flash).
+
+Free tier: 15 requests/minute, no billing required.
+Get a key at: https://aistudio.google.com → Get API key
 
 Gracefully degrades when no API key is configured — the rest of the system
 continues to function; only AI insights become unavailable.
-
-Get a free API key at: https://console.anthropic.com
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from src.config import settings
 
 logger = logging.getLogger("insights.llm_client")
 
-_DEGRADED_NO_KEY = "AI insights unavailable. Set ANTHROPIC_API_KEY in .env to enable."
+_DEGRADED_NO_KEY = "AI insights unavailable. Set GEMINI_API_KEY in .env to enable."
 _DEGRADED_API_ERROR = "AI insights temporarily unavailable."
 _DEFAULT_SYSTEM_PROMPT = "You are a helpful data analyst."
 
@@ -24,28 +25,27 @@ def chat_completion(
     system_prompt: str = _DEFAULT_SYSTEM_PROMPT,
 ) -> str:
     """
-    Call Claude and return the assistant reply as a plain string.
+    Call Gemini and return the model reply as a plain string.
 
     Returns a safe degradation message instead of raising if:
-    - ANTHROPIC_API_KEY is not set
+    - GEMINI_API_KEY is not set
     - The API returns an error
     """
-    if not settings.anthropic_api_key:
-        logger.warning("ANTHROPIC_API_KEY not set — returning degraded message.")
+    if not settings.gemini_api_key:
+        logger.warning("GEMINI_API_KEY not set — returning degraded message.")
         return _DEGRADED_NO_KEY
 
     try:
-        import anthropic  # type: ignore[import]
+        import google.generativeai as genai  # type: ignore[import]
 
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=512,
-            system=system_prompt,
-            messages=[{"role": "user", "content": prompt}],
+        genai.configure(api_key=settings.gemini_api_key)
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction=system_prompt,
         )
-        return message.content[0].text.strip()
+        response = model.generate_content(prompt)
+        return response.text.strip()
 
-    except anthropic.APIError as exc:  # type: ignore[attr-defined]
-        logger.error("Anthropic API error: %s", exc)
+    except Exception as exc:
+        logger.error("Gemini API error: %s", exc)
         return _DEGRADED_API_ERROR

@@ -1,7 +1,7 @@
 """
 Tests for src.insights: LLM client and summarizer.
 
-All Anthropic API calls are mocked — no real HTTP requests are made.
+All Gemini API calls are mocked — no real HTTP requests are made.
 """
 from __future__ import annotations
 
@@ -211,86 +211,69 @@ class TestAnswerQuestion:
 
 class TestLLMClient:
     def test_returns_degraded_message_when_no_key(self):
-        """
-        When anthropic_api_key is empty, chat_completion returns the degradation
-        message WITHOUT contacting the Anthropic API.
-        """
+        """When gemini_api_key is empty, chat_completion returns the degradation
+        message WITHOUT contacting the Gemini API."""
         import src.insights.llm_client as llm_mod
 
         with patch.object(llm_mod, "settings") as mock_settings:
-            mock_settings.anthropic_api_key = ""
+            mock_settings.gemini_api_key = ""
             result = llm_mod.chat_completion("test prompt")
-            assert "ANTHROPIC_API_KEY" in result or "unavailable" in result.lower()
+            assert "GEMINI_API_KEY" in result or "unavailable" in result.lower()
 
-    def test_no_anthropic_call_when_key_missing(self):
-        """
-        Anthropic client must never be instantiated when the API key is empty.
-        """
+    def test_no_gemini_call_when_key_missing(self):
+        """Gemini client must never be configured when the API key is empty."""
         import src.insights.llm_client as llm_mod
 
-        mock_anthropic_module = MagicMock()
+        mock_genai = MagicMock()
 
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"anthropic": mock_anthropic_module}),
+            patch.dict("sys.modules", {"google.generativeai": mock_genai}),
         ):
-            mock_settings.anthropic_api_key = ""
+            mock_settings.gemini_api_key = ""
             llm_mod.chat_completion("test prompt")
-            mock_anthropic_module.Anthropic.assert_not_called()
+            mock_genai.configure.assert_not_called()
 
     def test_returns_graceful_error_on_api_error(self):
-        """
-        When anthropic.APIError is raised, chat_completion catches it and
-        returns a graceful error string instead of propagating the exception.
-        """
+        """When Gemini raises an exception, chat_completion catches it and
+        returns a graceful error string instead of propagating."""
         import src.insights.llm_client as llm_mod
 
-        class MockAPIError(Exception):
-            pass
-
-        mock_anthropic_module = MagicMock()
-        mock_anthropic_module.APIError = MockAPIError
-        mock_client_instance = MagicMock()
-        mock_anthropic_module.Anthropic.return_value = mock_client_instance
-        mock_client_instance.messages.create.side_effect = MockAPIError("Rate limit exceeded")
+        mock_genai = MagicMock()
+        mock_model = MagicMock()
+        mock_genai.GenerativeModel.return_value = mock_model
+        mock_model.generate_content.side_effect = Exception("Rate limit exceeded")
 
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"anthropic": mock_anthropic_module}),
+            patch.dict("sys.modules", {"google.generativeai": mock_genai}),
         ):
-            mock_settings.anthropic_api_key = "fake-api-key"
+            mock_settings.gemini_api_key = "fake-key"
             result = llm_mod.chat_completion("test prompt")
             assert "unavailable" in result.lower()
 
     def test_returns_model_response_on_success(self):
-        """
-        When the API succeeds, the model text content is returned (stripped).
+        """When the API succeeds, the response text is returned (stripped).
 
-        Anthropic response shape: message.content[0].text
+        Gemini response shape: response.text
         """
         import src.insights.llm_client as llm_mod
 
         expected_content = "Sales are growing in Q3."
 
-        class MockAPIError(Exception):
-            pass
+        mock_response = MagicMock()
+        mock_response.text = f"  {expected_content}  "
 
-        mock_content_block = MagicMock()
-        mock_content_block.text = f"  {expected_content}  "
+        mock_model = MagicMock()
+        mock_model.generate_content.return_value = mock_response
 
-        mock_message = MagicMock()
-        mock_message.content = [mock_content_block]
-
-        mock_anthropic_module = MagicMock()
-        mock_anthropic_module.APIError = MockAPIError
-        mock_client_instance = MagicMock()
-        mock_anthropic_module.Anthropic.return_value = mock_client_instance
-        mock_client_instance.messages.create.return_value = mock_message
+        mock_genai = MagicMock()
+        mock_genai.GenerativeModel.return_value = mock_model
 
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"anthropic": mock_anthropic_module}),
+            patch.dict("sys.modules", {"google.generativeai": mock_genai}),
         ):
-            mock_settings.anthropic_api_key = "fake-api-key"
+            mock_settings.gemini_api_key = "fake-key"
             result = llm_mod.chat_completion("test prompt")
             assert result == expected_content
