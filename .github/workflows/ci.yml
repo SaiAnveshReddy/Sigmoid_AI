@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint with ruff
+        run: ruff check src/ tests/ ui/ scripts/
+
+      - name: Run tests
+        env:
+          GROQ_API_KEY: ""
+          DATABASE_PATH: ":memory:"
+          MODEL_PATH: "models/test_model.joblib"
+          DATA_DIR: "data/raw"
+        run: pytest tests/ -v --tb=short
+
+      - name: Build Docker images
+        run: |
+          docker build -f Dockerfile.api -t cpg-api:test .
+          docker build -f Dockerfile.ui -t cpg-ui:test .

@@ -1,0 +1,22 @@
+store_id,store_name,region,state,city
+STR001,Chicago Mart,North,IL,Chicago
+STR002,Milwaukee Mart,North,WI,Milwaukee
+STR003,Minneapolis Mart,North,MN,Minneapolis
+STR004,Detroit Mart,North,MI,Detroit
+STR005,Cleveland Mart,North,OH,Cleveland
+STR006,Atlanta Mart,South,GA,Atlanta
+STR007,Houston Mart,South,TX,Houston
+STR008,Miami Mart,South,FL,Miami
+STR009,New Orleans Mart,,LA,New Orleans
+STR010,Charlotte Mart,South,NC,Charlotte
+STR011,New York Mart,East,NY,New York
+STR012,Philadelphia Mart,East,PA,Philadelphia
+STR013,Boston Mart,East,MA,Boston
+STR014,Baltimore Mart,East,MD,Baltimore
+STR015,Pittsburgh Mart,East,PA,Pittsburgh
+STR016,Los Angeles Mart,West,CA,Los Angeles
+STR017,Seattle Mart,West,WA,Seattle
+STR018,Denver Mart,West,CO,Denver
+STR019,Phoenix Mart,West,AZ,Phoenix
+STR020,Portland Mart,West,OR,Portland
+STR001,Chicago Mart,North,IL,Chicago

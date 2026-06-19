@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(New-Item *)",
+      "PowerShell(pip show *)",
+      "PowerShell(python -c \"import pytest; print\\(pytest.__version__\\)\" 2>&1; python -c \"import duckdb; print\\(duckdb.__version__\\)\" 2>&1; python -c \"import groq; print\\(groq.__version__\\)\" 2>&1)",
+      "PowerShell(python3 -c \"import pytest; print\\(pytest.__version__\\)\" 2>&1)"
+    ]
+  }
+}

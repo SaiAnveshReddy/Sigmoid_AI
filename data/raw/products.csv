@@ -1,0 +1,31 @@
+sku_id,product_name,category,brand,package_size,list_price,launch_date
+SKU0001,Sparkling Water 500ml,Beverages,AquaPure,500ml,11.95,2021-06-13
+SKU0002,Energy Drink 330ml,Beverages,FizzBurst,330ml,10.91,2022-03-03
+SKU0003,Orange Juice 1L,Beverages,SunDrop,1L,14.67,2021-10-21
+SKU0004,Green Tea 500ml,Beverages,AquaPure,500ml,3.23,2021-11-13
+SKU0005,Lemonade 330ml,Beverages,FizzBurst,330ml,6.51,2018-12-22
+SKU0006,Sports Drink 750ml,Beverages,SunDrop,750ml,12.61,2021-07-13
+SKU0007,Cold Brew Coffee 250ml,Beverages,AquaPure,250ml,4.57,2018-07-25
+SKU0008,Coconut Water 330ml,Beverages,FizzBurst,330ml,12.67,2018-04-18
+SKU0009,Berry Smoothie 500ml,,SunDrop,500ml,,2021-05-02
+SKU0010,Iced Tea 1L,Beverages,AquaPure,1L,13.56,2022-09-22
+SKU0011,Tortilla Chips 200g,Snacks,CrunchMaster,200g,4.13,2019-06-14
+SKU0012,Cheese Puffs 150g,Snacks,SnackKing,150g,3.58,2018-09-20
+SKU0013,Pretzels 250g,Snacks,NibbleCo,250g,11.55,2019-12-12
+SKU0014,Popcorn 100g,Snacks,CrunchMaster,100g,6.5,2019-01-14
+SKU0015,Rice Cakes 150g,Snacks,SnackKing,150g,4.06,2020-02-20
+SKU0016,Granola Bars 6pk,Snacks,NibbleCo,6pk,4.56,2020-07-19
+SKU0017,Trail Mix 200g,Snacks,CrunchMaster,200g,7.4,2018-10-18
+SKU0018,Beef Jerky 80g,Snacks,SnackKing,80g,5.72,2021-10-24
+SKU0019,Crackers 200g,Snacks,NibbleCo,200g,12.36,2022-05-26
+SKU0020,Veggie Chips 150g,Snacks,CrunchMaster,150g,10.71,2019-08-04
+SKU0021,Whole Milk 1L,Dairy,FreshFarm,1L,4.2,2022-01-23
+SKU0022,Greek Yogurt 500g,Dairy,DairyDelight,500g,10.48,2021-06-20
+SKU0023,Cheddar Cheese 200g,Dairy,CreamCo,200g,12.04,2020-06-15
+SKU0024,Butter 250g,Dairy,FreshFarm,250g,3.39,2020-03-04
+SKU0025,Cream Cheese 150g,Dairy,DairyDelight,150g,,2021-06-24
+SKU0026,Sour Cream 200g,Dairy,CreamCo,200g,11.83,2020-07-18
+SKU0027,Cottage Cheese 500g,Dairy,FreshFarm,500g,8.97,2018-07-23
+SKU0028,Heavy Cream 250ml,Dairy,DairyDelight,250ml,1.92,2019-05-13
+SKU0029,Mozzarella 200g,Dairy,CreamCo,200g,4.4,2019-05-28
+SKU0030,Whipped Cream 250ml,Dairy,FreshFarm,250ml,4.66,2022-10-02
