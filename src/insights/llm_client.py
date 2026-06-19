@@ -1,8 +1,8 @@
 """
-Thin wrapper around the Google Gemini API (gemini-1.5-flash).
+Thin wrapper around the Google Gemini API (gemini-2.0-flash-lite).
 
 Free tier: 15 requests/minute, no billing required.
-Get a key at: https://aistudio.google.com → Get API key
+Get a key at: https://aistudio.google.com -> Get API key
 
 Gracefully degrades when no API key is configured — the rest of the system
 continues to function; only AI insights become unavailable.
@@ -36,14 +36,19 @@ def chat_completion(
         return _DEGRADED_NO_KEY
 
     try:
-        import google.generativeai as genai  # type: ignore[import]
+        from google import genai  # type: ignore[import]
+        from google.genai import types  # type: ignore[import]
 
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=system_prompt,
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=512,
+                temperature=0.3,
+            ),
         )
-        response = model.generate_content(prompt)
         return response.text.strip()
 
     except Exception as exc:

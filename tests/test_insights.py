@@ -221,59 +221,51 @@ class TestLLMClient:
             assert "GEMINI_API_KEY" in result or "unavailable" in result.lower()
 
     def test_no_gemini_call_when_key_missing(self):
-        """Gemini client must never be configured when the API key is empty."""
+        """Gemini Client must never be instantiated when the API key is empty."""
         import src.insights.llm_client as llm_mod
-
-        mock_genai = MagicMock()
 
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"google.generativeai": mock_genai}),
+            patch("google.genai.Client") as mock_client_class,
         ):
             mock_settings.gemini_api_key = ""
             llm_mod.chat_completion("test prompt")
-            mock_genai.configure.assert_not_called()
+            mock_client_class.assert_not_called()
 
     def test_returns_graceful_error_on_api_error(self):
         """When Gemini raises an exception, chat_completion catches it and
         returns a graceful error string instead of propagating."""
         import src.insights.llm_client as llm_mod
 
-        mock_genai = MagicMock()
-        mock_model = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-        mock_model.generate_content.side_effect = Exception("Rate limit exceeded")
-
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"google.generativeai": mock_genai}),
+            patch("google.genai.Client") as mock_client_class,
         ):
             mock_settings.gemini_api_key = "fake-key"
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+            mock_client.models.generate_content.side_effect = Exception("Rate limit exceeded")
             result = llm_mod.chat_completion("test prompt")
             assert "unavailable" in result.lower()
 
     def test_returns_model_response_on_success(self):
         """When the API succeeds, the response text is returned (stripped).
 
-        Gemini response shape: response.text
+        google-genai response shape: response.text
         """
         import src.insights.llm_client as llm_mod
 
         expected_content = "Sales are growing in Q3."
 
-        mock_response = MagicMock()
-        mock_response.text = f"  {expected_content}  "
-
-        mock_model = MagicMock()
-        mock_model.generate_content.return_value = mock_response
-
-        mock_genai = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-
         with (
             patch.object(llm_mod, "settings") as mock_settings,
-            patch.dict("sys.modules", {"google.generativeai": mock_genai}),
+            patch("google.genai.Client") as mock_client_class,
         ):
             mock_settings.gemini_api_key = "fake-key"
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+            mock_response = MagicMock()
+            mock_response.text = f"  {expected_content}  "
+            mock_client.models.generate_content.return_value = mock_response
             result = llm_mod.chat_completion("test prompt")
             assert result == expected_content
